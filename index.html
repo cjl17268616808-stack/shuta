@@ -1,0 +1,225 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数塔 - 数据库与向量数据库AI教材</title>
+    <link rel="stylesheet" href="css/style.css?v=202610181851">
+    <link rel="stylesheet" href="css/animations.css?v=202610181851">
+    <link rel="stylesheet" href="css/taku.css?v=202610181851">
+    <link rel="stylesheet" href="css/home.css?v=202610181851">
+</head>
+<body>
+    <!-- 波普漫画背景装饰层：半调网点 + 角落爆炸星 + 速度线 -->
+    <div class="comic-bg-decor" aria-hidden="true">
+        <span class="burst burst-tl">★</span>
+        <span class="burst burst-tr">⚡</span>
+        <span class="burst burst-bl">💥</span>
+        <span class="burst burst-br">!</span>
+        <div class="speed-lines"></div>
+    </div>
+
+    <!-- 背景音乐：内置曲目由 bgmEngine 现场合成（零音频文件），上传的 MP3 走这个 audio 元素 -->
+    <audio id="bgm-audio" loop></audio>
+
+    <!-- 右上角控制区 -->
+    <div class="top-controls">
+        <div class="control-group progress-group">
+            <div class="progress-badge">
+                📊 <span id="progress-count">0</span>/<span id="progress-total">32</span>
+            </div>
+            <button id="about-btn" class="global-btn icon-btn" title="AI日志" onclick="comicEngine.startSpecialLog()">📜</button>
+        </div>
+            <button id="howto-btn" class="global-btn icon-btn" title="怎么玩" onclick="comicEngine.showGuide(true)"><span class="btn-label">数塔操作说明</span>❓</button>
+            <button id="home-btn" class="global-btn" onclick="shutaHome.open()">🏠<span class="btn-label"> 数塔之家</span></button>
+
+        <div class="control-group audio-group">
+            <button id="music-btn" class="global-btn icon-btn" title="音乐" onclick="bgmEngine.toggle()">🎵</button>
+            <button id="mute-btn" class="global-btn icon-btn" title="语音" onclick="takuEngine.toggleMute()">🔊</button>
+            <button id="settings-btn" class="global-btn icon-btn" title="设置" onclick="takuEngine.toggleSettings()">⚙️</button>
+        </div>
+        <button id="global-home-btn" class="global-btn" style="display: none;" onclick="comicEngine.goHome()">🏠 返回大厅</button>
+    </div>
+
+    <!-- 设置面板（默认隐藏） -->
+    <div id="settings-panel" class="settings-panel" style="display: none;">
+        <h3>⚙️ 声音设置</h3>
+
+               <label>塔库的声线：</label>
+        <div style="display: flex; gap: 10px; margin-top: 5px;">
+            <select id="voice-select" onchange="takuEngine.applyVoiceSettings()" style="flex-grow: 1;">
+                <option value="">默认声音</option>
+            </select>
+            <button class="global-btn" style="padding: 5px 15px; font-size: 12px;" onclick="takuEngine.testVoice()">试听</button>
+        </div>
+
+        <label>塔库语速：<span id="rate-value">1.0</span></label>
+        <input type="range" id="voice-rate" min="0.5" max="2.0" step="0.1" value="1.0" oninput="takuEngine.applyVoiceSettings()">
+
+        <label>塔库音调：<span id="pitch-value">1.1</span></label>
+        <input type="range" id="voice-pitch" min="0.5" max="2.0" step="0.1" value="1.1" oninput="takuEngine.applyVoiceSettings()">
+
+        <hr style="border-top:2px dashed #ccc; margin:15px 0;">
+
+        <label>🎵 背景音乐（内置曲目，不用上传任何文件）：</label>
+        <select id="bgm-track" onchange="bgmEngine.setTrack(this.value)"></select>
+        <p class="settings-hint" id="bgm-hint">默认曲子《数据高塔》，第一次点一下页面就会响起来。</p>
+
+        <label>音乐音量：<span id="bgm-vol-value">0.3</span></label>
+        <input type="range" id="bgm-volume" min="0" max="1.0" step="0.05" value="0.3" oninput="bgmEngine.setVolume(this.value)">
+
+        <label>换成自己的 MP3（可选）：</label>
+        <input type="file" id="bgm-upload" accept="audio/*" onchange="takuEngine.handleBGMUpload(event)">
+        <hr style="border-top:2px dashed #ccc; margin:15px 0;">
+        <label>📊 学习进度说明：</label>
+        <p class="settings-hint" id="progress-hint">
+            你的学习进度<b>保存在本机浏览器里</b>；「AI 日志」章节会<b>实时读取它</b>生成学习记录——<br>
+            学完一节，日志里就立刻多一条。<br>
+            换成别的浏览器或用隐私模式打开会重新开始；点下面的按钮可以随时重置。
+        </p>
+        <button class="global-btn" style="width: 100%; margin-top: 20px; background: #ff6b6b; color: #fff;" onclick="comicEngine.resetProgress()">🗑️ 重置学习进度</button>
+    </div>
+        <!-- 左上角标题与彩虹云路 -->
+    <div class="header-area" id="main-header">
+        <h1 class="project-title">数塔</h1>
+        <div class="rainbow-cloud-road">
+            <div class="cloud cloud-1"></div>
+            <div class="cloud cloud-2"></div>
+            <div class="cloud cloud-3"></div>
+            <div class="cloud cloud-4"></div>
+            <div class="rainbow-path">
+                <span>从零到AI数据大师的奇妙之旅</span>
+            </div>
+        </div>
+    </div>
+    <div id="app">
+        <!-- 主页主视觉插画：塔库攀登数据高塔（鼠标视差互动） -->
+        <div class="hero-banner" id="hero-banner">
+            <img src="assets/img/hero-main.png" alt="塔库攀登数据高塔" class="hero-img" id="hero-img">
+            <div class="hero-sfx hero-sfx-1">哇!</div>
+            <div class="hero-sfx hero-sfx-2">冲呀!</div>
+        </div>
+        <!-- 塔库：机器人在气泡旁边；贴到屏幕边缘时歪着身子探出头（探头）。
+             气泡 = 塔库说话的可视化（右上角带漫画大头贴），说话时姿态不变、不会整个滑出来 -->
+        <div class="taku-area" id="taku-area">
+            <!-- 塔库机器人本体（会浮动、会眨眼、会变色） -->
+            <div class="taku-robot" id="taku">
+                <div class="taku-antenna"></div>
+                <div class="taku-head">
+                    <div class="taku-eye left"></div>
+                    <div class="taku-eye right"></div>
+                </div>
+                <div class="taku-body">
+                    <div class="data-stream"></div>
+                </div>
+            </div>
+            <!-- 说话的气泡：右上角是塔库的漫画大头贴 -->
+            <div class="taku-dialog-box" id="taku-dialog">
+                <img src="assets/img/taku-anchor.png" class="taku-avatar" alt="塔库" draggable="false">
+                <div class="taku-bubble">
+                    <p id="taku-text">系统启动中...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 漫画主舞台 -->
+        <div id="stage"></div>
+    </div>
+
+    <script src="js/data.js?v=202610181851"></script>
+    <script src="js/fetchData.js?v=202610181851"></script>
+    <script src="js/bgmEngine.js?v=202610181851"></script>
+    <script src="js/takuEngine.js?v=202610181851"></script>
+    <!-- 学习进度内嵌基线：先于 comicEngine 加载，保证进度不依赖浏览器缓存 -->
+    <script src="js/progress-baseline.js?v=202610181851"></script>
+    <script src="js/comicEngine.js?v=202610181851"></script>
+
+    <!-- ==================== 数塔之家：数据库操作实战（真实 SQLite） ==================== -->
+    <div id="home-panel" class="home-panel" style="display: none;">
+        <div class="home-topbar">
+            <div class="home-title">🏠 数塔之家<span class="home-sub">数据库操作实战 · 真实 SQLite</span></div>
+            <div class="home-status" id="home-status"></div>
+            <div class="home-topbar-actions">
+                <span class="home-progress" id="home-progress">已完成 0 / 0</span>
+                <button class="global-btn" onclick="shutaHome.exportDb()">💾 导出 .db</button>
+                <button class="global-btn" onclick="shutaHome.resetDb()">🧹 重置数据库</button>
+                <button class="global-btn" onclick="shutaHome.close()">↩ 返回数塔</button>
+            </div>
+        </div>
+        <div class="home-body">
+            <!-- 左边栏：选小节 / 实战任务 标签页切换 -->
+            <aside class="home-col home-col-sidebar">
+                <div class="home-tabs">
+                    <button class="home-tab active" data-tab="lessons" onclick="shutaHome.switchTab('lessons')">选小节</button>
+                    <button class="home-tab" data-tab="tasks" onclick="shutaHome.switchTab('tasks')">实战任务</button>
+                </div>
+                <div class="home-tab-panel" id="tab-lessons">
+                    <div class="home-col-head">
+                        <div class="home-mini-actions">
+                            <button class="mini-btn ghost" onclick="shutaHome.selectPreset('sql')">SQL 操作类</button>
+                            <button class="mini-btn ghost" onclick="shutaHome.selectPreset('learned')">按学习进度</button>
+                            <button class="mini-btn ghost" onclick="shutaHome.selectPreset('ai')">向量 / AI</button>
+                            <button class="mini-btn ghost" onclick="shutaHome.selectPreset('all')">全选</button>
+                            <button class="mini-btn ghost" onclick="shutaHome.selectPreset('none')">清空</button>
+                        </div>
+                    </div>
+                    <div class="home-lesson-list" id="home-lesson-list"></div>
+                </div>
+                <div class="home-tab-panel" id="tab-tasks" style="display:none;">
+                    <div class="home-col-head">
+                        <div class="home-mini-actions">
+                            <button class="mini-btn run" onclick="shutaHome.checkAll()">☑ 全部检查</button>
+                            <button class="mini-btn ghost" onclick="shutaHome.clearAllDone()" title="只清掉打勾，数据库里的数据不动">↺ 清空打勾</button>
+                            <select id="home-task-filter" onchange="shutaHome.renderTasks()">
+                                <option value="all">全部任务</option>
+                                <option value="todo">只看未完成</option>
+                                <option value="done">只看已完成</option>
+                            </select>
+                            <input id="home-task-search" class="mini-input" placeholder="🔎 搜任务…" oninput="shutaHome.renderTasks()">
+                        </div>
+                    </div>
+                    <div class="home-task-list" id="home-task-list"></div>
+                </div>
+            </aside>
+
+            <!-- ② SQL 控制台 -->
+            <main class="home-col home-col-console">
+                <div class="home-col-head">
+                    <h3>② SQL 控制台<span class="home-sel">内置函数：cos_sim(a,b)、vec_norm(a)</span></h3>
+                    <div class="home-mini-actions">
+                        <button class="mini-btn run" onclick="shutaHome.run()">▶ 运行 (Ctrl+Enter)</button>
+                        <button class="mini-btn ghost" onclick="shutaHome.clearConsole()">🧽 清空</button>
+                        <button class="mini-btn ghost" onclick="shutaHome.refreshDbState(false)" title="重新读一遍数据库">🔄 刷新状态</button>
+                    </div>
+                </div>
+                <textarea id="home-sql" class="home-sql" spellcheck="false" placeholder="-- 在这里写真实 SQL，Ctrl+Enter 运行&#10;SELECT * FROM students LIMIT 5;&#10;-- 试试：EXPLAIN QUERY PLAN SELECT * FROM students WHERE class_id = 1;"></textarea>
+                <div class="home-result" id="home-result"></div>
+
+                <!-- 数据库状态：每跑一次 SQL 就刷新，新建的表 / 行数变化都会亮出来 -->
+                <div class="home-dbstate" id="home-dbstate">
+                    <div class="home-dbstate-head">
+                        <span class="home-dbstate-title">🗂 数据库状态</span>
+                        <span class="home-dbstate-sum" id="home-db-summary">—</span>
+                        <span class="home-dbstate-diff" id="home-db-diff"></span>
+                        <button class="mini-btn ghost" id="home-db-toggle" onclick="shutaHome.toggleDbState()">收起</button>
+                    </div>
+                    <div class="home-dbstate-body" id="home-dbstate-body">
+                        <div class="home-db-chips" id="home-db-chips"></div>
+                        <div class="home-db-detail" id="home-db-detail">
+                            <div class="home-empty">点上面任意一张表，看它的列、索引和建表语句 👆</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="js/main.js?v=202610181851"></script>
+
+    <!-- 数塔之家：任务库 + 校验器 + 模块 -->
+    <script src="js/dbTasks.js?v=202610181851"></script>
+    <script src="js/dbTasksAdvanced.js?v=202610181851"></script>
+    <script src="js/dbRunner.js?v=202610181851"></script>
+    <script src="js/shutaHome.js?v=202610181851"></script>
+</body>
+</html>

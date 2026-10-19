@@ -1,0 +1,355 @@
+/* ==========================================================================
+   🤖 塔库 · 贴边探头
+   --------------------------------------------------------------------------
+   画面里两样东西：
+     ① 塔库机器人本体（会浮动、会眨眼、会变色）—— 站在气泡【旁边】
+     ② 气泡 = 塔库说话的可视化，右上角挂着塔库的漫画大头贴
+   探头：塔库贴到屏幕左/右边缘时，歪着身子朝屏幕外探出去（半个身子出画），
+        像从墙角探头。说话时【保持探头】，只换台词 + "啵"一下，不会整个滑出来。
+   ⚠️ 机器人不要趴在气泡上！气泡只负责"显示它说的话"。
+   ========================================================================== */
+
+/* ---------- 容器：悬浮在屏幕角落，贴边 ---------- */
+.taku-area {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: auto;
+    display: flex;
+    align-items: flex-end;
+    gap: 18px;                   /* 机器人和气泡之间的间距 */
+    z-index: 1000;
+    /* ⚠️ 容器和气泡都不吃鼠标事件：浮在内容之上的东西如果吃点击，
+       就会出现"看得见、点不到"。能点 / 能拖的只有塔库本体。 */
+    pointer-events: none;
+    user-select: none;
+    touch-action: none;
+}
+/* 贴右：机器人排在最右边，气泡在它左边；贴左则相反 */
+.taku-area.side-right { left: auto; right: 20px; flex-direction: row-reverse; }
+
+/* ---------- 塔库机器人本体 ---------- */
+.taku-robot {
+    position: relative;
+    flex: 0 0 auto;
+    width: 120px;
+    height: 144px;
+    pointer-events: auto;
+    cursor: grab;
+    touch-action: none;
+    -webkit-user-drag: none;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(3px 3px 0 rgba(0,0,0,0.2));
+    transform-origin: 50% 60%;
+    transition: transform 0.42s cubic-bezier(0.34, 1.32, 0.64, 1);
+}
+.taku-area.dragging { transition: none !important; }
+/* 量位置时临时用：把探头位移关掉，量到的才是真实落点 */
+.taku-area.measuring,
+.taku-area.measuring .taku-robot { transform: none !important; transition: none !important; }
+.taku-area.dragging .taku-robot { cursor: grabbing; transition: none; }
+
+/* ⚠️ 上下浮动用 translate 属性（不是 transform）：
+   动画一旦用 transform，就会把"探头"那个 rotate/translate 全盖掉。 */
+@keyframes float {
+    0%, 100% { translate: 0 0; }
+    50%      { translate: 0 -10px; }
+}
+
+/* ==========================================================================
+   📌 探头：贴边的时候，塔库朝屏幕外歪过去，半个身子探出屏幕边
+   —— 旋转让脑袋朝屏幕里探、身子朝屏幕外沉，所以看着像"从边上探出头"，
+      而不是被屏幕竖直切一半（竖直切 = 断头，用户明确否决过）。
+   ========================================================================== */
+/* 探头位移分两段：① 整个塔库（机器人 + 气泡）朝屏幕边靠过去 ② 机器人再单独往外沉。
+   合起来大约把机器人推到屏幕外 6 成：脑袋露一半、身体大半在屏幕外。 */
+.taku-area.peeked.side-right { transform: translateX(30px); }
+.taku-area.peeked.side-left  { transform: translateX(-30px); }
+.taku-area.peeked.side-right .taku-robot {
+    transform: translateX(46px) rotate(-24deg);
+}
+.taku-area.peeked.side-left .taku-robot {
+    transform: translateX(-46px) rotate(24deg);
+}
+
+/* 天线 */
+.taku-antenna {
+    width: 5px;
+    height: 25px;
+    background: var(--ink-color, #1a1a1a);
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 3px;
+}
+.taku-antenna::after {
+    content: '';
+    width: 14px;
+    height: 14px;
+    background: var(--highlight, #ffd32a);
+    border: 3px solid var(--ink-color, #1a1a1a);
+    border-radius: 50%;
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 0 10px var(--highlight, #ffd32a);
+    animation: blink 2s infinite;
+}
+
+/* 头部 */
+.taku-head {
+    width: 104px;
+    height: 74px;
+    background: #fff;
+    border: 4px solid var(--ink-color, #1a1a1a);
+    border-radius: 24px 24px 14px 14px;
+    position: absolute;
+    top: 20px;
+    left: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+    box-shadow: 4px 4px 0 var(--ink-color, #1a1a1a);
+    z-index: 2;
+}
+/* 漫画腮红 */
+.taku-head::before, .taku-head::after {
+    content: '';
+    position: absolute;
+    bottom: 12px;
+    width: 12px;
+    height: 7px;
+    background: #ffb8b8;
+    border-radius: 50%;
+    opacity: 0.8;
+}
+.taku-head::before { left: 10px; }
+.taku-head::after { right: 10px; }
+
+/* 发光眼睛 */
+.taku-eye {
+    width: 22px;
+    height: 22px;
+    background: var(--primary-color, #00d2d3);
+    border: 2px solid var(--ink-color, #1a1a1a);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--primary-color, #00d2d3);
+    transition: all 0.3s;
+    position: relative;
+}
+.taku-eye::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 4px;
+    width: 6px; height: 6px;
+    background: #fff;
+    border-radius: 50%;
+}
+.taku-eye.left { animation: blink 4s infinite; }
+.taku-eye.right { animation: blink 4s infinite 0.2s; }
+
+@keyframes blink {
+    0%, 90%, 100% { transform: scaleY(1); }
+    95% { transform: scaleY(0.1); }
+}
+
+/* 塔库情绪变化 */
+.taku-robot.happy .taku-eye { background: #feca57; box-shadow: 0 0 15px #feca57; }
+.taku-robot.confused .taku-eye {
+    background: #ff6b6b; box-shadow: 0 0 15px #ff6b6b;
+    transform: rotate(45deg); border-radius: 6px;
+}
+.taku-robot.confused .taku-eye::after { display: none; }
+
+/* 身体（数据流核心） */
+.taku-body {
+    width: 84px;
+    height: 62px;
+    background: #e0f7fa;
+    border: 4px solid var(--ink-color, #1a1a1a);
+    border-radius: 14px 14px 22px 22px;
+    position: absolute;
+    top: 82px;
+    left: 18px;
+    box-shadow: 4px 4px 0 var(--ink-color, #1a1a1a);
+    overflow: hidden;
+}
+.data-stream {
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 10px,
+        var(--primary-color, #00d2d3) 10px,
+        var(--primary-color, #00d2d3) 12px
+    );
+    opacity: 0.45;
+    animation: scrollData 2s linear infinite;
+}
+@keyframes scrollData {
+    0% { transform: translateY(-20px); }
+    100% { transform: translateY(0); }
+}
+
+/* ==========================================================================
+   💬 气泡：塔库说话的可视化（不吃点击），右上角挂漫画大头贴
+   ========================================================================== */
+.taku-dialog-box {
+    position: relative;
+    flex: 0 1 auto;
+    /* 气泡宽度跟着字数走：短句短、长句长（最多 min(420px, 34vw) 就换行），
+       所以"字越多气泡越长"，不会一开始就占一大块。 */
+    max-width: min(420px, 34vw);
+    pointer-events: none;
+    transition: max-width 0.3s ease;
+}
+
+/* ==========================================================================
+   📌 用户在用正文 → 气泡缩成小条让开内容（js：滚动 / 点正文 / 划选文字时触发，
+      停手 4 秒、或者塔库再开口，就重新摊开）。
+   ========================================================================== */
+.taku-area.compact .taku-dialog-box { max-width: 118px; }
+.taku-area.compact #taku-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;          /* 只留两行，多的省略 */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 11.5px;
+    line-height: 1.45;
+}
+.taku-bubble {
+    position: relative;
+    z-index: 1;
+    background: #fff;
+    border: 4px solid var(--ink-color, #1a1a1a);
+    border-radius: 22px;
+    padding: 16px 20px;
+    box-shadow: 6px 6px 0 var(--ink-color, #1a1a1a);
+    animation: dialogPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#taku-text {
+    font-size: 13.5px;
+    line-height: 1.6;
+    font-weight: bold;
+    word-break: break-word;
+}
+
+/* 气泡的小尾巴：指向旁边的塔库（贴右朝右，贴左朝左） */
+.taku-dialog-box::before,
+.taku-dialog-box::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    top: 62%;
+}
+.taku-area.side-right .taku-dialog-box::before {
+    right: -16px;
+    border-top: 14px solid transparent;
+    border-bottom: 14px solid transparent;
+    border-left: 16px solid var(--ink-color, #1a1a1a);
+}
+.taku-area.side-right .taku-dialog-box::after {
+    right: -9px;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-left: 12px solid #fff;
+}
+.taku-area.side-left .taku-dialog-box::before {
+    left: -16px;
+    border-top: 14px solid transparent;
+    border-bottom: 14px solid transparent;
+    border-right: 16px solid var(--ink-color, #1a1a1a);
+}
+.taku-area.side-left .taku-dialog-box::after {
+    left: -9px;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 12px solid #fff;
+}
+
+/* 塔库的漫画大头贴：挂在气泡右上角（原来就有的那个） */
+.taku-avatar {
+    position: absolute;
+    z-index: 2;
+    top: -46px;
+    right: -22px;
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    object-position: center 15%;
+    border-radius: 50%;
+    border: 4px solid var(--ink-color, #1a1a1a);
+    background: #ffe9a8;
+    box-shadow: 4px 4px 0 var(--ink-color, #1a1a1a);
+    transform: rotate(6deg);
+    transition: transform 0.25s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+.taku-dialog-box:hover .taku-avatar { transform: rotate(-4deg) scale(1.1); }
+
+/* 说话时"啵"一下（塔库和气泡一起弹） */
+@keyframes takuBubblePop {
+    0%   { transform: translateY(0) scale(1); }
+    45%  { transform: translateY(-4px) scale(1.05); }
+    100% { transform: translateY(0) scale(1); }
+}
+/* ⚠️ 只让气泡弹，别给 .taku-robot 加 transform 动画：
+   那会在动画期间把"探头"的 rotate/translateX 整个盖掉，机器人会瞬间摆正又歪回去。 */
+.taku-dialog-box.talking { animation: takuBubblePop 0.32s ease; }
+
+/* 内容底部留白：让最后一张卡能滚到塔库上方，不被挡住 */
+@media (max-width: 768px) {
+    #app { padding-bottom: 150px; }
+}
+
+/* ==========================================================================
+   📱 窄屏适配
+   ========================================================================== */
+@media (max-width: 768px) {
+    .taku-area {
+        bottom: 10px;
+        left: 10px;
+        gap: 10px;
+    }
+    .taku-area.side-right { right: 10px; }
+    .taku-robot { transform: scale(0.78); transform-origin: left bottom; }
+    .taku-area.peeked.side-right { transform: translateX(26px); }
+    .taku-area.peeked.side-left  { transform: translateX(-26px); }
+    .taku-area.peeked.side-right .taku-robot { transform: translateX(48px) rotate(-24deg) scale(0.78); transform-origin: left bottom; }
+    .taku-area.peeked.side-left .taku-robot  { transform: translateX(-48px) rotate(24deg) scale(0.78); transform-origin: right bottom; }
+    .taku-dialog-box { max-width: min(320px, 62vw); }
+    .taku-area.compact .taku-dialog-box { max-width: 96px; }
+    .taku-bubble { padding: 10px 12px; border-radius: 18px; }
+    #taku-text { font-size: 12px; line-height: 1.5; }
+    .taku-avatar { width: 54px; height: 54px; top: -34px; right: -16px; }
+    /* 窄屏把"数塔操作说明 / 数塔之家"收成图标，避免顶部按钮堆成 4 行 */
+    .btn-label { display: none; }
+    .top-controls { max-width: 68%; gap: 4px; }
+}
+
+@media (max-width: 500px) {
+    .taku-area { gap: 8px; }
+    .taku-robot { transform: scale(0.64); transform-origin: left bottom; }
+    .taku-area.peeked.side-right { transform: translateX(20px); }
+    .taku-area.peeked.side-left  { transform: translateX(-20px); }
+    .taku-area.peeked.side-right .taku-robot { transform: translateX(40px) rotate(-24deg) scale(0.64); transform-origin: left bottom; }
+    .taku-area.peeked.side-left .taku-robot  { transform: translateX(-40px) rotate(24deg) scale(0.64); transform-origin: right bottom; }
+    .taku-dialog-box { max-width: min(260px, 58vw); }
+    .taku-area.compact .taku-dialog-box { max-width: 84px; }
+    #taku-text { font-size: 11.5px; }
+    .taku-avatar { width: 46px; height: 46px; top: -28px; right: -14px; }
+    .top-controls { max-width: 66%; gap: 3px; }
+}
+
+/* 尊重「减弱动态效果」 */
+@media (prefers-reduced-motion: reduce) {
+    .taku-area, .taku-dialog-box, .taku-avatar, .taku-bubble, .taku-robot,
+    .taku-eye, .taku-antenna::after, .data-stream {
+        transition: none !important;
+        animation: none !important;
+    }
+}

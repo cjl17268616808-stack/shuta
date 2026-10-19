@@ -1,0 +1,204 @@
+/* ==========================================================================
+   🎬 数塔 · 漫画动画系统
+   - 入场转场 / 通关彩带 / 点击飞溅 / 背景速度线 / 塔库动作
+   ========================================================================== */
+
+/* ============ 背景装饰动画 ============ */
+.comic-bg-decor .burst {
+    animation: burstFloat 6s ease-in-out infinite;
+}
+.burst-tl { animation-delay: 0s; }
+.burst-tr { animation-delay: 1.5s; font-size: 48px; top: 120px; right: 60px; color: var(--secondary-color, #ff9f43); -webkit-text-stroke: 3px var(--ink-color); text-shadow: 4px 4px 0 var(--ink-color); }
+.burst-bl { animation-delay: 3s; font-size: 44px; bottom: 200px; left: 60px; color: #55efc4; -webkit-text-stroke: 3px var(--ink-color); text-shadow: 4px 4px 0 var(--ink-color); }
+
+@keyframes burstFloat {
+    0%, 100% { transform: rotate(-15deg) scale(1); opacity: 0.5; }
+    50% { transform: rotate(-5deg) scale(1.15); opacity: 0.8; }
+}
+.burst-tr { animation-name: burstFloatAlt; }
+.burst-bl { animation-name: burstFloatAlt; }
+@keyframes burstFloatAlt {
+    0%, 100% { transform: rotate(10deg) scale(1); opacity: 0.5; }
+    50% { transform: rotate(20deg) scale(1.2); opacity: 0.8; }
+}
+
+/* 速度线：平时透明，通关时爆发 */
+.speed-lines {
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-conic-gradient(
+            from 0deg at 50% 50%,
+            transparent 0deg 8deg,
+            rgba(26,26,26,0.08) 8deg 9deg
+        );
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+body.celebrating .speed-lines {
+    opacity: 1;
+    animation: speedZoom 0.8s ease-out;
+}
+@keyframes speedZoom {
+    0% { transform: scale(0.3); opacity: 0; }
+    40% { opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* ============ 章节卡片入场（依次弹入） ============ */
+/* ⚠️ 关键：必须先给显式 opacity:1 兜底。
+   入场动画用 backwards 填充，起始帧是 opacity:0；
+   一旦动画因故不播放（卡顿、降级渲染、reduced-motion、截图/预渲染），
+   卡片会永久停在 opacity:0——页面看着是空的，用户完全无从下手。 */
+.chapter-card {
+    opacity: 1;
+    animation: cardPopIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+}
+.chapter-card:nth-child(1) { animation-delay: 0.05s; }
+.chapter-card:nth-child(2) { animation-delay: 0.15s; }
+.chapter-card:nth-child(3) { animation-delay: 0.25s; }
+.chapter-card:nth-child(4) { animation-delay: 0.35s; }
+.chapter-card:nth-child(5) { animation-delay: 0.45s; }
+.chapter-card:nth-child(n+6) { animation-delay: 0.55s; }
+
+@keyframes cardPopIn {
+    0% { transform: translateY(60px) scale(0.8) rotate(-5deg); opacity: 0; }
+    70% { transform: translateY(-10px) scale(1.05) rotate(2deg); opacity: 1; }
+    100% { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+}
+
+/* ============ 分镜面板转场 ============ */
+.comic-panel {
+    animation: panelSlideIn 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes panelSlideIn {
+    0% { transform: translateX(80px) scale(0.95) rotate(1deg); opacity: 0; }
+    100% { transform: translateX(0) scale(1) rotate(0); opacity: 1; }
+}
+
+/* 舞台道具依次出现 */
+.stage-area > * {
+    animation: itemPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+}
+.stage-area > *:nth-child(1) { animation-delay: 0.1s; }
+.stage-area > *:nth-child(2) { animation-delay: 0.25s; }
+.stage-area > *:nth-child(3) { animation-delay: 0.4s; }
+.stage-area > *:nth-child(4) { animation-delay: 0.55s; }
+.stage-area > *:nth-child(n+5) { animation-delay: 0.7s; }
+@keyframes itemPop {
+    0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+    70% { transform: scale(1.15) rotate(3deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* ============ 通关庆祝：彩带星星 ============ */
+.confetti-piece {
+    position: fixed;
+    width: 12px;
+    height: 12px;
+    z-index: 9999;
+    pointer-events: none;
+    animation: confettiFall 2.5s ease-in forwards;
+}
+@keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg) scale(0.5); opacity: 0; }
+}
+
+/* 点击星星飞溅 */
+.spark {
+    position: fixed;
+    width: 20px;
+    height: 20px;
+    z-index: 9998;
+    pointer-events: none;
+    font-size: 18px;
+    line-height: 1;
+    animation: sparkFly 0.6s ease-out forwards;
+}
+@keyframes sparkFly {
+    0% { transform: translate(0,0) scale(0.5) rotate(0deg); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(1.3) rotate(var(--rot)); opacity: 0; }
+}
+
+/* ============ 通关标题弹跳 ============ */
+.comic-panel h2[style*="accent"] {
+    animation: titleBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: inline-block;
+}
+@keyframes titleBounce {
+    0% { transform: scale(0) rotate(-10deg); }
+    50% { transform: scale(1.3) rotate(3deg); }
+    70% { transform: scale(0.95) rotate(-2deg); }
+    100% { transform: scale(1) rotate(0); }
+}
+
+/* ============ 塔库 ============
+   塔库现在是"贴边探头"（脑袋从气泡上沿探出来），没有会动的机器人本体，
+   所以原来 .taku-robot 的 happy / confused 跳动动画已删除。
+   说话时"啵"一下的动画在 css/taku.css 里（.taku-dialog-box.talking）。 */
+
+/* 对话框弹出（挂在气泡本体上，免得和说话时的 .talking 动画互相打断） */
+.taku-bubble {
+    animation: dialogPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes dialogPop {
+    0% { transform: scale(0.8) translateY(10px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* ============ 按钮漫画感 ============ */
+.global-btn, .comic-btn, .btn-prev {
+    position: relative;
+    overflow: visible;
+}
+/* 按钮 hover 时冒出小星星 */
+.global-btn:hover::after, .comic-btn:hover::after {
+    content: '✦';
+    position: absolute;
+    top: -8px;
+    right: -5px;
+    font-size: 14px;
+    color: var(--highlight, #ffd32a);
+    -webkit-text-stroke: 1px var(--ink-color);
+    animation: starTwinkle 0.6s ease-in-out infinite;
+}
+@keyframes starTwinkle {
+    0%, 100% { transform: scale(1) rotate(0); opacity: 1; }
+    50% { transform: scale(1.4) rotate(20deg); opacity: 0.7; }
+}
+
+/* ============ 已通关印章盖章动画 ============ */
+.kp-completed-stamp {
+    animation: stampDown 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes stampDown {
+    0% { transform: scale(3) rotate(40deg); opacity: 0; }
+    60% { transform: scale(0.9) rotate(8deg); opacity: 1; }
+    100% { transform: scale(1) rotate(12deg); opacity: 0.92; }
+}
+
+/* ============ 减少动态（用户偏好） ============ */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ============ 无障碍：尊重「减弱动态效果」 ============ */
+@media (prefers-reduced-motion: reduce) {
+    .chapter-card,
+    .comic-panel,
+    .welcome-flip,
+    .guide-card,
+    .guide-overlay {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+    .hero-tap-hint, .rec-flag, .tap-hint { animation: none !important; }
+}

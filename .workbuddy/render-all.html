@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数塔 - 数据库与向量数据库AI教材</title>
+    <link rel="stylesheet" href="../css/style.css?v=202610110100">
+    <link rel="stylesheet" href="../css/animations.css?v=202610110100">
+    <link rel="stylesheet" href="../css/taku.css?v=202610110100">
+    <link rel="stylesheet" href="../css/home.css?v=202610110100">
+</head>
+<body>
+    <!-- 波普漫画背景装饰层：半调网点 + 角落爆炸星 + 速度线 -->
+    <div class="comic-bg-decor" aria-hidden="true">
+        <span class="burst burst-tl">★</span>
+        <span class="burst burst-tr">⚡</span>
+        <span class="burst burst-bl">💥</span>
+        <span class="burst burst-br">!</span>
+        <div class="speed-lines"></div>
+    </div>
+
+    <!-- 背景音乐：内置曲目由 bgmEngine 现场合成（零音频文件），上传的 MP3 走这个 audio 元素 -->
+    <audio id="bgm-audio" loop></audio>
+
+    <!-- 右上角控制区 -->
+    <div class="top-controls">
+        <div class="progress-badge">
+            📊 已学习 <span id="progress-count">0</span> / <span id="progress-total">32</span>
+        </div>
+        <button id="home-btn" class="global-btn" onclick="shutaHome.open()">🏠 数塔之家</button>
+        <button id="settings-btn" class="global-btn" onclick="takuEngine.toggleSettings()">⚙️ 设置</button>
+        <button id="music-btn" class="global-btn" onclick="bgmEngine.toggle()">🎵 音乐开</button>
+        <button id="mute-btn" class="global-btn" onclick="takuEngine.toggleMute()">🔊 语音开启</button>
+        <button id="about-btn" class="global-btn" onclick="comicEngine.startSpecialLog()">📜 AI日志</button>
+        <button id="global-home-btn" class="global-btn" style="display: none;" onclick="comicEngine.goHome()">🏠 返回大厅</button>
+    </div>
+
+    <!-- 设置面板（默认隐藏） -->
+    <div id="settings-panel" class="settings-panel" style="display: none;">
+        <h3>⚙️ 声音设置</h3>
+
+               <label>塔库的声线：</label>
+        <div style="display: flex; gap: 10px; margin-top: 5px;">
+            <select id="voice-select" onchange="takuEngine.applyVoiceSettings()" style="flex-grow: 1;">
+                <option value="">默认声音</option>
+            </select>
+            <button class="global-btn" style="padding: 5px 15px; font-size: 12px;" onclick="takuEngine.testVoice()">试听</button>
+        </div>
+
+        <label>塔库语速：<span id="rate-value">1.0</span></label>
+        <input type="range" id="voice-rate" min="0.5" max="2.0" step="0.1" value="1.0" oninput="takuEngine.applyVoiceSettings()">
+
+        <label>塔库音调：<span id="pitch-value">1.1</span></label>
+        <input type="range" id="voice-pitch" min="0.5" max="2.0" step="0.1" value="1.1" oninput="takuEngine.applyVoiceSettings()">
+
+        <hr style="border-top:2px dashed #ccc; margin:15px 0;">
+
+        <label>🎵 背景音乐（内置曲目，不用上传任何文件）：</label>
+        <select id="bgm-track" onchange="bgmEngine.setTrack(this.value)"></select>
+        <p class="settings-hint" id="bgm-hint">默认曲子《数据高塔》，第一次点一下页面就会响起来。</p>
+
+        <label>音乐音量：<span id="bgm-vol-value">0.3</span></label>
+        <input type="range" id="bgm-volume" min="0" max="1.0" step="0.05" value="0.3" oninput="bgmEngine.setVolume(this.value)">
+
+        <label>换成自己的 MP3（可选）：</label>
+        <input type="file" id="bgm-upload" accept="audio/*" onchange="takuEngine.handleBGMUpload(event)">
+        <button class="global-btn" style="width: 100%; margin-top: 20px; background: #ff6b6b; color: #fff;" onclick="comicEngine.resetProgress()">🗑️ 重置学习进度</button>
+    </div>
+        <!-- 左上角标题与彩虹云路 -->
+    <div class="header-area" id="main-header">
+        <h1 class="project-title">数塔</h1>
+        <div class="rainbow-cloud-road">
+            <div class="cloud cloud-1"></div>
+            <div class="cloud cloud-2"></div>
+            <div class="cloud cloud-3"></div>
+            <div class="cloud cloud-4"></div>
+            <div class="rainbow-path">
+                <span>从零到AI数据大师的奇妙之旅</span>
+            </div>
+        </div>
+    </div>
+    <div id="app">
+        <!-- 主页主视觉插画：塔库攀登数据高塔（鼠标视差互动） -->
+        <div class="hero-banner" id="hero-banner">
+            <img src="../assets/img/hero-main.png" alt="塔库攀登数据高塔" class="hero-img" id="hero-img">
+            <div class="hero-sfx hero-sfx-1">哇!</div>
+            <div class="hero-sfx hero-sfx-2">冲呀!</div>
+        </div>
+        <!-- 塔库机器人区域（现在悬浮在左下角） -->
+        <div class="taku-area" id="taku-area">
+            <div class="taku-robot" id="taku">
+                <div class="taku-antenna"></div>
+                <div class="taku-head">
+                    <div class="taku-eye left"></div>
+                    <div class="taku-eye right"></div>
+                </div>
+                <div class="taku-body">
+                    <div class="data-stream"></div>
+                </div>
+            </div>
+            <div class="taku-dialog-box" id="taku-dialog">
+                <img src="../assets/img/taku-anchor.png" class="taku-avatar" alt="塔库漫画形象">
+                <p id="taku-text">系统启动中...</p>
+            </div>
+        </div>
+
+        <!-- 漫画主舞台 -->
+        <div id="stage"></div>
+    </div>
+
+    <script src="../js/data.js?v=202610110100"></script>
+    <script src="../js/fetchData.js?v=202610110100"></script>
+    <script src="../js/bgmEngine.js?v=202610110100"></script>
+    <script src="../js/takuEngine.js?v=202610110100"></script>
+    <script src="../js/progress-baseline.js?v=202610110100"></script>
+    <script src="../js/comicEngine.js?v=202610110200"></script>
+
+    <!-- ==================== 数塔之家：数据库操作实战（真实 SQLite） ==================== -->
+    <div id="home-panel" class="home-panel" style="display: none;">
+        <div class="home-topbar">
+            <div class="home-title">🏠 数塔之家<span class="home-sub">数据库操作实战 · 真实 SQLite</span></div>
+            <div class="home-status" id="home-status"></div>
+            <div class="home-topbar-actions">
+                <span class="home-progress" id="home-progress">已完成 0 / 0</span>
+                <button class="global-btn" onclick="shutaHome.exportDb()">💾 导出 .db</button>
+                <button class="global-btn" onclick="shutaHome.resetDb()">🧹 重置数据库</button>
+                <button class="global-btn" onclick="shutaHome.close()">↩ 返回数塔</button>
+            </div>
+        </div>
+        <div class="home-body">
+            <!-- ① 自由选择小节 -->
+            <aside class="home-col home-col-lessons">
+                <div class="home-col-head">
+                    <h3>① 选小节 <span class="home-sel" id="home-sel-count"></span></h3>
+                    <div class="home-mini-actions">
+                        <button class="mini-btn ghost" onclick="shutaHome.selectPreset('sql')">SQL 操作类</button>
+                        <button class="mini-btn ghost" onclick="shutaHome.selectPreset('learned')">按学习进度</button>
+                        <button class="mini-btn ghost" onclick="shutaHome.selectPreset('ai')">向量 / AI</button>
+                        <button class="mini-btn ghost" onclick="shutaHome.selectPreset('all')">全选</button>
+                        <button class="mini-btn ghost" onclick="shutaHome.selectPreset('none')">清空</button>
+                    </div>
+                </div>
+                <div class="home-lesson-list" id="home-lesson-list"></div>
+            </aside>
+
+            <!-- ② SQL 控制台 -->
+            <main class="home-col home-col-console">
+                <div class="home-col-head">
+                    <h3>② SQL 控制台（这台数据库是真的）<span class="home-sel">内置函数：cos_sim(a,b)、vec_norm(a)</span></h3>
+                    <div class="home-mini-actions">
+                        <button class="mini-btn run" onclick="shutaHome.run()">▶ 运行 (Ctrl+Enter)</button>
+                        <button class="mini-btn ghost" onclick="shutaHome.clearConsole()">🧽 清空</button>
+                        <button class="mini-btn ghost" onclick="shutaHome.refreshDbState(false)" title="重新读一遍数据库">🔄 刷新状态</button>
+                    </div>
+                </div>
+                <textarea id="home-sql" class="home-sql" spellcheck="false" placeholder="-- 在这里写真实 SQL，Ctrl+Enter 运行&#10;SELECT * FROM students LIMIT 5;&#10;-- 试试：EXPLAIN QUERY PLAN SELECT * FROM students WHERE class_id = 1;"></textarea>
+                <div class="home-result" id="home-result"></div>
+
+                <!-- 数据库状态：每跑一次 SQL 就刷新，新建的表 / 行数变化都会亮出来 -->
+                <div class="home-dbstate" id="home-dbstate">
+                    <div class="home-dbstate-head">
+                        <span class="home-dbstate-title">🗂 数据库状态</span>
+                        <span class="home-dbstate-sum" id="home-db-summary">—</span>
+                        <span class="home-dbstate-diff" id="home-db-diff"></span>
+                        <button class="mini-btn ghost" id="home-db-toggle" onclick="shutaHome.toggleDbState()">收起</button>
+                    </div>
+                    <div class="home-dbstate-body" id="home-dbstate-body">
+                        <div class="home-db-chips" id="home-db-chips"></div>
+                        <div class="home-db-detail" id="home-db-detail">
+                            <div class="home-empty">点上面任意一张表，看它的列、索引和建表语句 👆</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- ③ 实战任务 -->
+            <aside class="home-col home-col-tasks">
+                <div class="home-col-head">
+                    <h3>③ 实战任务 <span id="home-task-count"></span></h3>
+                    <div class="home-mini-actions">
+                        <button class="mini-btn run" onclick="shutaHome.checkAll()">☑ 全部检查</button>
+                        <button class="mini-btn ghost" onclick="shutaHome.clearAllDone()" title="只清掉打勾，数据库里的数据不动">↺ 清空打勾</button>
+                        <select id="home-task-filter" onchange="shutaHome.renderTasks()">
+                            <option value="all">全部任务</option>
+                            <option value="todo">只看未完成</option>
+                            <option value="done">只看已完成</option>
+                        </select>
+                        <input id="home-task-search" class="mini-input" placeholder="🔎 搜任务…" oninput="shutaHome.renderTasks()">
+                    </div>
+                </div>
+                <div class="home-task-list" id="home-task-list"></div>
+            </aside>
+        </div>
+    </div>
+
+    <script src="../js/main.js?v=202610110100"></script>
+
+    <!-- 数塔之家：任务库 + 校验器 + 模块 -->
+    <script src="../js/dbTasks.js?v=202610110100"></script>
+    <script src="../js/dbTasksAdvanced.js?v=202610110100"></script>
+    <script src="../js/dbRunner.js?v=202610110100"></script>
+    <script src="../js/shutaHome.js?v=202610110100"></script>
+
+<script>
+/* 数塔 · 全量自动通关测试（.workbuddy/render-all.html，用浏览器打开即可）
+   遍历所有知识点所有分镜，按互动类型自动点完，报告"哪个分镜没走通/有没有 JS 报错" */
+window.__errs = [];
+window.addEventListener('error', e => window.__errs.push('ERROR: ' + (e.message || e.type) + ' @' + (e.lineno || '?')));
+window.addEventListener('unhandledrejection', e => window.__errs.push('REJECT: ' + ((e.reason && e.reason.message) || e.reason)));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const q = s => document.querySelector(s);
+const qa = s => Array.from(document.querySelectorAll(s));
+const fire = el => { if (!el) return false; el.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 24, clientY: 24 })); return true; };
+const pick = (arr, test) => arr.find(test);
+
+(async () => {
+  const box = window.__box = { total: 0, perMode: {}, problems: [], errors: [] };
+  const pre = document.createElement('pre');
+  pre.id = '__diag';
+  document.body.appendChild(pre);
+  const flush = () => { box.errors = window.__errs; pre.textContent = 'DIAG_JSON:' + JSON.stringify(box); };
+  try {
+    await sleep(700);
+    let advanced = 0;
+    comicEngine.nextPanel = function () { advanced++; };
+    comicEngine.goHome = function () { advanced++; };   // 收尾按钮可能回大厅，也算走完
+
+    async function solve(it) {
+      const m = it.type, before = advanced;
+      const done = async (wait) => { if (wait) await sleep(wait); return advanced > before ? { ok: true } : { ok: false, note: m + ' 完成后没推进' }; };
+      if (m === 'click') { return fire(qa('#interaction-area .comic-btn')[0]) ? done() : { ok: false, note: '没有继续按钮' }; }
+      if (m === 'quiz') {
+        const b = qa('#interaction-area .comic-btn');
+        if (b.length !== it.options.length) return { ok: false, note: '选项数不符 ' + b.length + '/' + it.options.length };
+        fire(b[it.answer]); return done(2200);
+      }
+      if (m === 'click-object') {
+        const objs = qa('.' + it.targetClass);
+        if (!objs.length) return { ok: false, note: '舞台上没有 .' + it.targetClass };
+        objs.forEach(fire); await sleep(20);
+        const got = qa('.' + it.targetClass + '.collected').length;
+        return got === objs.length ? { ok: true } : { ok: false, note: '只收集 ' + got + '/' + objs.length };
+      }
+      const fin = async () => {
+        if (!q('.mode-done')) return { ok: false, note: m + ' 没出现完成条' };
+        fire(q('.mode-next')); await sleep(10);
+        return advanced > before ? { ok: true } : { ok: false, note: m + ' 点继续没反应' };
+      };
+      if (m === 'sequence') {
+        for (const s of it.steps) { const c = pick(qa('.seq-chip'), x => x.innerText.trim() === String(s).trim()); if (!c) return { ok: false, note: '找不到步骤 ' + s }; fire(c); await sleep(4); }
+        return fin();
+      }
+      if (m === 'match') {
+        const cols = qa('.match-cols .match-col');
+        if (cols.length !== 2) return { ok: false, note: '配对列不是 2 列' };
+        for (let k = 0; k < it.pairs.length; k++) {
+          const l = cols[0].querySelector('.match-item[data-k="' + k + '"]'), r = cols[1].querySelector('.match-item[data-k="' + k + '"]');
+          if (!l || !r) return { ok: false, note: '第 ' + (k + 1) + ' 对没渲染' };
+          fire(l); await sleep(4); fire(r); await sleep(4);
+        }
+        return fin();
+      }
+      if (m === 'fill') {
+        const bl = qa('.fill-blank');
+        if (bl.length !== it.answers.length) return { ok: false, note: '空格 ' + bl.length + ' ≠ 答案 ' + it.answers.length };
+        for (const a of it.answers) { const c = pick(qa('.fill-chip'), x => x.dataset.val === a && !x.classList.contains('used')); if (!c) return { ok: false, note: '找不到词块 ' + a }; fire(c); await sleep(4); }
+        return fin();
+      }
+      if (m === 'toggle') { const sw = q('.toggle-switch'); if (!sw) return { ok: false, note: '没有开关' }; fire(sw); await sleep(4); fire(sw); await sleep(4); return fin(); }
+      if (m === 'flip') { const c = qa('.flip-card'); if (c.length !== it.cards.length) return { ok: false, note: '卡片数不符' }; c.forEach(fire); await sleep(10); return fin(); }
+      if (m === 'find') {
+        const rows = qa('.find-row');
+        if (rows.length !== it.rows.length) return { ok: false, note: '行数不符' };
+        for (let i = 0; i < it.rows.length; i++) if (it.rows[i].hit) { fire(rows[i]); await sleep(4); }
+        return fin();
+      }
+      if (m === 'branch') {
+        const o = qa('.branch-opt'), gi = it.options.findIndex(x => x.tone === 'good');
+        if (o.length !== it.options.length) return { ok: false, note: '选项数不符' };
+        if (gi < 0) return { ok: false, note: '没有 tone=good' };
+        fire(o[gi]); await sleep(10); return fin();
+      }
+      if (m === 'sort') {
+        const bk = qa('.sort-bucket');
+        if (bk.length !== it.buckets.length) return { ok: false, note: '筐数不符' };
+        for (let k = 0; k < it.items.length; k++) {
+          const c = q('.sort-chip[data-k="' + k + '"]');
+          if (!c) return { ok: false, note: '第 ' + (k + 1) + ' 个物品没渲染' };
+          fire(c); await sleep(4); fire(bk[it.answers[k]]); await sleep(4);
+        }
+        return fin();
+      }
+      if (m === 'judge') {
+        const cards = qa('.judge-card');
+        if (cards.length !== it.statements.length) return { ok: false, note: '判断卡数不符' };
+        for (let i = 0; i < it.statements.length; i++) {
+          const btns = cards[i].querySelectorAll('.judge-btn');
+          if (btns.length !== 2) return { ok: false, note: '第 ' + (i + 1) + ' 卡没有对/错按钮' };
+          fire(btns[it.statements[i].answer ? 0 : 1]); await sleep(6);
+        }
+        return fin();
+      }
+      if (m === 'challenge') {
+        const segs = qa('.claim-seg');
+        const wi = it.segments.findIndex(s => s.wrong);
+        if (wi < 0) return { ok: false, note: '数据里没有 wrong:true' };
+        let di = 0; for (let k = 0; k < wi; k++) if (it.segments[k].check) di++;
+        if (!segs[di]) return { ok: false, note: '错误段没渲染成可点质疑段' };
+        fire(segs[di]); await sleep(10); return fin();
+      }
+      if (m === 'input') {
+        const box = q('.input-box'), btn = q('.input-confirm');
+        if (!box || !btn) return { ok: false, note: '没有输入框/确认按钮' };
+        box.value = it.accept[0]; fire(btn); await sleep(10); return fin();
+      }
+      if (m === 'describe') {
+        const ta = q('.describe-box'), btn = q('.describe-submit');
+        if (!ta || !btn) return { ok: false, note: '没有书写区/提交按钮' };
+        ta.value = it.reference || ('我的理解：' + (it.prompt || '') + '。' + (it.keywords || []).join('、'));
+        fire(btn); await sleep(10); return fin();
+      }
+      return { ok: false, note: '未知模式 ' + m };
+    }
+
+    const all = textbookData.chapters.concat(textbookData.specialChapter ? [textbookData.specialChapter] : []);
+    for (const ch of all) for (let i = 0; i < ch.knowledgePoints.length; i++) {
+      const kp = ch.knowledgePoints[i];
+      comicEngine.currentChapter = ch;
+      comicEngine.currentKpIndex = i;
+      for (let p = 0; p < (kp.panels || []).length; p++) {
+        box.total++;
+        const panel = kp.panels[p];
+        const mode = panel.interaction ? panel.interaction.type : 'plain';
+        box.perMode[mode] = (box.perMode[mode] || 0) + 1;
+        comicEngine.currentPanelIndex = p;
+        try { comicEngine.renderPanel(panel); } catch (e) { box.problems.push(kp.id + ' 分镜' + (p + 1) + ' 渲染异常：' + e.message); flush(); continue; }
+        await sleep(20);
+        if (!panel.interaction) { flush(); continue; }
+        let res;
+        try { res = await solve(panel.interaction); } catch (e) { res = { ok: false, note: '互动异常：' + e.message }; }
+        if (!res.ok) box.problems.push(kp.id + ' 分镜' + (p + 1) + ' [' + mode + '] ' + res.note);
+        flush();
+      }
+    }
+    box.stage = 'done';
+    flush();
+  } catch (e) { box.fatal = String((e && e.stack) || e); flush(); }
+})();
+</script>
+</body>
+</html>

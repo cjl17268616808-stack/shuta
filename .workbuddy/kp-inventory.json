@@ -1,0 +1,360 @@
+[
+ {
+  "ch": 1,
+  "kp": "1-1",
+  "title": "初识数据库",
+  "n": 6,
+  "modes": [
+   "flip",
+   "sort"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 1,
+  "kp": "1-2",
+  "title": "表、行、列",
+  "n": 5,
+  "modes": [
+   "sequence",
+   "sort"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 1,
+  "kp": "1-3",
+  "title": "主键与外键",
+  "n": 5,
+  "modes": [
+   "branch",
+   "find"
+  ],
+  "quiz": 4
+ },
+ {
+  "ch": 1,
+  "kp": "1-4",
+  "title": "SQL 语言初探",
+  "n": 5,
+  "modes": [
+   "fill",
+   "flip"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 1,
+  "kp": "1-5",
+  "title": "增删改查（CRUD）",
+  "n": 5,
+  "modes": [
+   "flip",
+   "sequence"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 2,
+  "kp": "2-1",
+  "title": "数据完整性约束",
+  "n": 6,
+  "modes": [
+   "fill",
+   "find"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 2,
+  "kp": "2-2",
+  "title": "索引：为什么查得快",
+  "n": 6,
+  "modes": [
+   "find",
+   "toggle"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 2,
+  "kp": "2-3",
+  "title": "事务：要么全成功，要么全失败",
+  "n": 6,
+  "modes": [
+   "match",
+   "sequence"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 2,
+  "kp": "2-4",
+  "title": "视图与存储过程",
+  "n": 6,
+  "modes": [
+   "match",
+   "toggle"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 2,
+  "kp": "2-5",
+  "title": "SQL 注入与防范",
+  "n": 6,
+  "modes": [
+   "branch",
+   "flip"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 3,
+  "kp": "3-1",
+  "title": "一条SQL的执行过程",
+  "n": 5,
+  "modes": [
+   "match",
+   "sort"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 3,
+  "kp": "3-2",
+  "title": "缓冲池 (Buffer Pool)",
+  "n": 5,
+  "modes": [
+   "find",
+   "flip"
+  ],
+  "quiz": 4
+ },
+ {
+  "ch": 3,
+  "kp": "3-3",
+  "title": "为什么是 B+ 树",
+  "n": 5,
+  "modes": [
+   "fill",
+   "sequence"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 3,
+  "kp": "3-4",
+  "title": "聚簇索引与非聚簇索引",
+  "n": 5,
+  "modes": [
+   "sort",
+   "toggle"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 3,
+  "kp": "3-5",
+  "title": "Redo Log 与 Undo Log",
+  "n": 5,
+  "modes": [
+   "branch",
+   "sequence"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 3,
+  "kp": "3-6",
+  "title": "锁机制与 MVCC",
+  "n": 5,
+  "modes": [
+   "branch",
+   "toggle"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 4,
+  "kp": "4-1",
+  "title": "为什么需要 NoSQL",
+  "n": 5,
+  "modes": [
+   "flip",
+   "match"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 4,
+  "kp": "4-2",
+  "title": "Redis 键值数据库",
+  "n": 5,
+  "modes": [
+   "branch",
+   "fill"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 4,
+  "kp": "4-3",
+  "title": "缓存穿透击穿雪崩",
+  "n": 6,
+  "modes": [
+   "find",
+   "sequence"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 4,
+  "kp": "4-4",
+  "title": "MongoDB 文档数据库",
+  "n": 6,
+  "modes": [
+   "branch",
+   "sort"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 4,
+  "kp": "4-5",
+  "title": "Redis 持久化机制",
+  "n": 6,
+  "modes": [
+   "fill",
+   "sort"
+  ],
+  "quiz": 3
+ },
+ {
+  "ch": 5,
+  "kp": "5-1",
+  "title": "分库分表",
+  "n": 6,
+  "modes": [
+   "find",
+   "sort"
+  ],
+  "quiz": 4
+ },
+ {
+  "ch": 5,
+  "kp": "5-2",
+  "title": "主从复制",
+  "n": 6,
+  "modes": [
+   "sequence",
+   "toggle"
+  ],
+  "quiz": 4
+ },
+ {
+  "ch": 5,
+  "kp": "5-3",
+  "title": "读写分离",
+  "n": 6,
+  "modes": [
+   "branch",
+   "match"
+  ],
+  "quiz": 4
+ },
+ {
+  "ch": 5,
+  "kp": "5-4",
+  "title": "CAP 定理",
+  "n": 6,
+  "modes": [
+   "branch",
+   "fill",
+   "toggle"
+  ],
+  "quiz": 4
+ },
+ {
+  "ch": 5,
+  "kp": "5-5",
+  "title": "分布式事务",
+  "n": 7,
+  "modes": [
+   "find",
+   "match",
+   "sequence"
+  ],
+  "quiz": 4
+ },
+ {
+  "ch": 6,
+  "kp": "6-1",
+  "title": "什么是向量",
+  "n": 6,
+  "modes": [
+   "fill",
+   "match"
+  ],
+  "quiz": 4
+ },
+ {
+  "ch": 6,
+  "kp": "6-2",
+  "title": "向量相似度与距离",
+  "n": 6,
+  "modes": [
+   "fill",
+   "sequence",
+   "toggle"
+  ],
+  "quiz": 4
+ },
+ {
+  "ch": 6,
+  "kp": "6-3",
+  "title": "维度灾难与 HNSW",
+  "n": 6,
+  "modes": [
+   "branch",
+   "sequence",
+   "toggle"
+  ],
+  "quiz": 4
+ },
+ {
+  "ch": 6,
+  "kp": "6-4",
+  "title": "向量数据库 (Milvus)",
+  "n": 6,
+  "modes": [
+   "find",
+   "match"
+  ],
+  "quiz": 4
+ },
+ {
+  "ch": 6,
+  "kp": "6-5",
+  "title": "RAG：检索增强生成",
+  "n": 6,
+  "modes": [
+   "branch",
+   "fill",
+   "sequence"
+  ],
+  "quiz": 4
+ },
+ {
+  "ch": 6,
+  "kp": "6-6",
+  "title": "AI Agent 与长期记忆",
+  "n": 6,
+  "modes": [
+   "flip",
+   "match",
+   "sort"
+  ],
+  "quiz": 4
+ }
+]
